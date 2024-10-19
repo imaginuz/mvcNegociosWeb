@@ -11,10 +11,16 @@
       "nav_label":"<i class=\"fas fa-sign-in-alt\"></i>&nbsp;Crear Cuenta"
     },
     {
+      "id": "Menu_Landing",
+      "nav_url": "index.php?page=Home-Products",
+      "nav_label":"Landing Page"
+    },
+    {
       "id": "Menu_Demo",
       "nav_url": "index.php?page=Sales-TopTen",
       "nav_label":"Top 10"
     }
+    
   ],
   "private": [
     {
