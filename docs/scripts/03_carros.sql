@@ -1,4 +1,4 @@
-CREATE TABLE `ecommerce`. carros (
+CREATE TABLE carros(  
     codigo int NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'Primary Key',
     modelo VARCHAR(128),
     marca VARCHAR(128),
@@ -12,8 +12,7 @@ CREATE TABLE `ecommerce`. carros (
     rodaje VARCHAR(128),
     estado CHAR(3),
     creado DATETIME,
-    precioventa DECIMAL(13, 2),
-    preciocontado DECIMAL(13, 2),
-    precominicio DECIMAL(13, 2),
+    precioventa DECIMAL(13,2),
+    preciominio DECIMAL(13,2),
     actualizado DATETIME
 ) COMMENT 'Tabla que registra los automotores de un Dealer de Carros Usados';

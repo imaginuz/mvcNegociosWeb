@@ -12,13 +12,13 @@ class CarrosList extends PublicController
     {
         $carrosDao = Carros::obtenerCarros();
         $viewCarros = [];
-        $estadosDsCarr = [
+        $estadosDscArr = [
             "DSP" => "Disponible",
             "RSV" => "Reservado",
             "SLD" => "Vendido"
         ];
         foreach ($carrosDao as $carro) {
-            $carro["estadoDesc"] = $estadosDsCarr[$carro["estado"]];
+            $carro["estadoDsc"] = $estadosDscArr[$carro["estado"]];
             $viewCarros[] = $carro;
         }
         $viewData = [

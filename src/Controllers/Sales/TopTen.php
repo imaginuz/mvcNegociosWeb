@@ -5,30 +5,33 @@ namespace Controllers\Sales;
 use Controllers\PublicController;
 use Views\Renderer;
 
-class TopTen extends PublicController{
-    public function run() :void{
+class TopTen extends PublicController
+{
+    public function run(): void
+    {
         $viewData = [
-            "nombre_programado"=>'Jordy S Pineda',
-            "clases" =>[
-                "Programacion de Portales Web I",
-                "Programacion de Portales Web II",
-                "Programacion de Negocios Web"
+            "nombre_programado" => 'Orlando J Betancourth',
+            "clases" => [
+                "Programación de Portales Web I",
+                "Programación de Portales Web II",
+                "Programación de Negocios Web"
             ],
-            "contactos" =>[
+            "contactos" => [
                 [
-                    "nombre" =>"Fulanito de tal",
-                    "telefono" =>"09051353"
+                    "nombre" => "Fulanito de Tal",
+                    "telefono" => "09090909"
                 ],
                 [
-                    "nombre" =>"Mentanito de tal",
-                    "telefono" =>"09051353"
+                    "nombre" => "Menganito de Tal",
+                    "telefono" => "69690969"
                 ],
                 [
-                    "nombre" =>"Susanito de tal",
-                    "telefono" =>"09051353"
-                ],
+                    "nombre" => "Sutanito de Tal",
+                    "telefono" => "99999999"
+                ]
             ]
         ];
+
         if ($this->isPostBack()) {
             $txtNombre = $_POST["txtNombre"];
             $rsltMessage = strtoupper($txtNombre) . " Procesado!!!!";
