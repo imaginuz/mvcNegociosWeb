@@ -13,6 +13,6 @@ CREATE TABLE carros(
     estado CHAR(3),
     creado DATETIME,
     precioventa DECIMAL(13,2),
-    preciominio DECIMAL(13,2),
+    preciominimo DECIMAL(13,2),
     actualizado DATETIME
 ) COMMENT 'Tabla que registra los automotores de un Dealer de Carros Usados';
