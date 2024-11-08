@@ -34,7 +34,7 @@ class CarrosForm extends PublicController
     "creado"=>null,
     "precioventa"=>0,
     "preciocontado"=>0,
-    "precominicio" =>0,
+    "preciominimo" =>0,
     "actualizado"=>null
     ];
 

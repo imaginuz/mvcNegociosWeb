@@ -28,14 +28,16 @@ class Carros extends Table
         $sqlstr = 'insert into  carros (
             modelo, marca, anio, kilometraje, 
             chasis, color, registro, cilindraje, notas,
-            rodaje, estado, creado, precioventa, preciominio, 
+            rodaje, estado, creado, precioventa, preciominimo, 
             actualizado ) values
         (
             :modelo, :marca, :anio, :kilometraje, 
             :chasis, :color, :registro, :cilindraje, :notas, 
-            :rodaje, :estado, now(), :precioventa, :preciominio, 
+            :rodaje, :estado, now(), :precioventa, :preciominimo, 
             now()
         );';
+        
+
         return self::executeNonQuery($sqlstr, $carro);
     }
 
@@ -45,9 +47,10 @@ class Carros extends Table
         unset($carro['actualizado']);
         $sqlstr = "update carros set modelo = :modelo, marca = :marca, anio = :anio, kilometraje = :kilometraje, 
             chasis = :chasis, color = :color, registro = :registro, cilindraje = :cilindraje, notas = :notas,
-            rodaje = :rodaje, estado = :estado, precioventa = :precioventa, preciominio = :preciominio, 
+            rodaje = :rodaje, estado = :estado, precioventa = :precioventa, preciocontado = :preciocontado,
+            preciominimo = :preciominimo, 
             actualizado = now() where codigo = :codigo;";
-
+            
         return self::executeNonQuery($sqlstr, $carro);
     }
 

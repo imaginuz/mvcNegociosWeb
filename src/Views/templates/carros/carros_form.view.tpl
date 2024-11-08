@@ -69,8 +69,8 @@
             <input class="col-8" type="text" name="precioventa" id="precioventa" value="{{precioventa}}" {{~readonly}} />
         </div>
         <div class="row col-6 offset-3">
-            <label class="col-4" for="preciominio">Precio Mínimo</label>
-            <input class="col-8" type="text" name="preciominio" id="preciominio" value="{{preciominio}}" {{~readonly}} />
+            <label class="col-4" for="preciominimo">Precio Mínimo</label>
+            <input class="col-8" type="text" name="preciominimo" id="preciominimo" value="{{preciominimo}}" {{~readonly}} />
         </div>
         <div class="row col-6 offset-3">
             <label class="col-4" for="notas">Notas</label><br/>

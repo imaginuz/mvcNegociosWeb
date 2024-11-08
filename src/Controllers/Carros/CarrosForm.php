@@ -44,10 +44,10 @@ class CarrosForm extends PublicController
         "cilindraje" => 0,
         "notas" => '',
         "rodaje" => '',
-        "estado" => 'ACT',
+        "estado" => 'DSP',
         "creado" => null,
         "precioventa" => 0,
-        "preciominio" => 0,
+        "preciominimo" => 0,
         "actualizado" => null
     ];
 
@@ -110,7 +110,7 @@ class CarrosForm extends PublicController
         $this->carro["rodaje"] = $_POST["rodaje"];
         $this->carro["estado"] = $_POST["estado"];
         $this->carro["precioventa"] = floatval($_POST["precioventa"]);
-        $this->carro["preciominio"] = floatval($_POST["preciominio"]);
+        $this->carro["preciominimo"] = floatval($_POST["preciominimo"]);
     }
 
     private function validarDatos()
