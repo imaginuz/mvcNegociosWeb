@@ -19,6 +19,11 @@
       "id": "Menu_Carros",
       "nav_url": "index.php?page=Carros-CarrosList",
       "nav_label":"Carros"
+    },
+    {
+      "id": "Menu_ProductosElectronica",
+      "nav_url": "index.php?page=ProductosElectronica-ProductosElectronicaForm",
+      "nav_label":"Productos Electrnicos"
     }
   ],
   "private": [
