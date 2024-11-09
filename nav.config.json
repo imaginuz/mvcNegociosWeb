@@ -22,7 +22,7 @@
     },
     {
       "id": "Menu_ProductosElectronica",
-      "nav_url": "index.php?page=ProductosElectronica-ProductosElectronicaForm",
+      "nav_url": "index.php?page=ProductosElectronica-ProductosElectronicaList",
       "nav_label":"Productos Electrnicos"
     }
   ],
