@@ -1,7 +1,3 @@
-<h1>{{SITE_TITLE}}</h1>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis architecto doloremque officiis cumque eos ratione cupiditate obcaecati quas rem atque tempora, commodi ab dolore optio porro modi qui accusantium dolor.</p>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis architecto doloremque officiis cumque eos ratione cupiditate obcaecati quas rem atque tempora, commodi ab dolore optio porro modi qui accusantium dolor.</p>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis architecto doloremque officiis cumque eos ratione cupiditate obcaecati quas rem atque tempora, commodi ab dolore optio porro modi qui accusantium dolor.</p>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis architecto doloremque officiis cumque eos ratione cupiditate obcaecati quas rem atque tempora, commodi ab dolore optio porro modi qui accusantium dolor.</p>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis architecto doloremque officiis cumque eos ratione cupiditate obcaecati quas rem atque tempora, commodi ab dolore optio porro modi qui accusantium dolor.</p>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis architecto doloremque officiis cumque eos ratione cupiditate obcaecati quas rem atque tempora, commodi ab dolore optio porro modi qui accusantium dolor.</p>
+<h1 style="text-align: center; margin-top: 100px;">{{SITE_TITLE}}</h1>
+
+<h3 style="text-align: center; margin-top: 10px;">Ricardo Zuniga | 1701200300236</h3>
