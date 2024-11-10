@@ -24,6 +24,21 @@
       "id": "Menu_ProductosElectronica",
       "nav_url": "index.php?page=ProductosElectronica-ProductosElectronicaList",
       "nav_label":"Productos Electrnicos"
+    },
+    {
+      "id": "Menu_Usuarios",
+      "nav_url": "index.php?page=Usuarios-UsuariosList",
+      "nav_label": "Usuarios"
+    },
+    {
+      "id": "Menu_Roles",
+      "nav_url": "index.php?page=Roles-RolesList",
+      "nav_label": "Roles"
+    },
+    {
+      "id": "Menu_Funciones",
+      "nav_url": "index.php?page=Funciones-FuncionesList",
+      "nav_label": "Funciones"
     }
   ],
   "private": [
