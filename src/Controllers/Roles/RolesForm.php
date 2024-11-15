@@ -3,93 +3,171 @@
 namespace Controllers\Roles;
 
 use Controllers\PublicController;
-use Dao\Roles\Roles;
 use Views\Renderer;
+use Utilities\Site;
+use Dao\Roles\Roles;
+use Utilities\Validators;
 
 class RolesForm extends PublicController
 {
     private $viewData = [];
-    private $modeDscArr = [
-        "INS" => "Crear Nuevo Rol",
-        "UPD" => "Editar Rol %s",
-        "DEL" => "Eliminar Rol %s",
+    private $modeDscArr =
+    [
+        "INS" => "Crear nuevo rol",
+        "UPD" => "Editando el rol %s (%s)",
+        "DSP" => "Detalle del rol %s (%s)",
+        "DEL" => "Eliminando el rol %s (%s)",
+    ];
+
+    private $mode = '';
+    private $errors = [];
+    private $xssToken = '';
+
+    private function addError($error, $context = 'global')
+    {
+        if (isset($this->errors[$context])) {
+            $this->errors[$context][] = $error;
+        } else {
+            $this->errors[$context] = [$error];
+        }
+    }
+
+    private $rol =
+    [
+        "rolescod" => 'ROL001',
+        "rolesdsc" => '',
+        "rolesest" => 'ACT',
     ];
 
     public function run(): void
     {
-        $this->init();
-        if (!$this->isPostBack()) {
-            $this->prepareView();
-            Renderer::render("roles_form", $this->viewData);
-            return;
+        $this->inicializarForm();
+
+        if ($this->isPostBack()) {
+            $this->cargarDatosDelFormulario();
+
+            if ($this->validarDatos()) {
+                $this->procesarAccion();
+            }
         }
 
-        $this->processPost();
-        if (empty($this->viewData["errors"])) {
-            $this->executeAction();
+        $this->generarViewData();
+        Renderer::render('roles/roles_form', $this->viewData);
+    }
+
+    private function inicializarForm()
+    {
+        if (isset($_GET["mode"]) && isset($this->modeDscArr)) {
+            $this->mode = $_GET["mode"];
+        } else {
+            Site::redirectToWithMsg("index.php?page=Roles-RolesList", "Algo sucedió mal. Intente de nuevo.");
+            die();
         }
-        $this->prepareView();
-        Renderer::render("roles_form", $this->viewData);
-    }
 
-    private function init()
-    {
-        $this->viewData["mode"] = $_GET["mode"] ?? "INS";
-        $this->viewData["rolescod"] = $_GET["rolescod"] ?? null;
-        $this->viewData["rolesdsc"] = "";
-        $this->viewData["rolesest"] = "";
-        $this->viewData["errors"] = [];
-    }
-
-    private function prepareView()
-    {
-        $mode = $this->viewData["mode"];
-        $this->viewData["mode_dsc"] = sprintf($this->modeDscArr[$mode], $this->viewData["rolescod"]);
-        if ($mode === "UPD" || $mode === "DEL") {
-            $rol = Roles::obtenerPorId($this->viewData["rolescod"]);
-            $this->viewData = array_merge($this->viewData, $rol);
+        if ($this->mode !== 'INS' && isset($_GET["rolescod"])) {
+            $this->rol["rolescod"] = $_GET["rolescod"];
+            $this->cargarDatosRol();
         }
     }
 
-    private function processPost()
+    private function cargarDatosRol()
     {
-        if ($this->viewData["mode"] === "DEL") {
-            return;
-        }
-
-        $this->viewData["rolescod"] = $_POST["rolescod"] ?? "";
-        $this->viewData["rolesdsc"] = $_POST["rolesdsc"] ?? "";
-        $this->viewData["rolesest"] = $_POST["rolesest"] ?? "";
-
-        if (empty($this->viewData["rolescod"])) {
-            $this->viewData["errors"][] = "El código del rol es obligatorio.";
-        }
-        if (empty($this->viewData["rolesdsc"])) {
-            $this->viewData["errors"][] = "La descripción del rol es obligatoria.";
-        }
+        $tmpRol = Roles::ObtenerRolesPorID($this->rol["rolescod"]);
+        $this->rol = $tmpRol;
     }
 
-    private function executeAction()
+    private function cargarDatosDelFormulario()
     {
-        switch ($this->viewData["mode"]) {
-            case "INS":
-                Roles::insertar(
-                    $this->viewData["rolescod"],
-                    $this->viewData["rolesdsc"],
-                    $this->viewData["rolesest"]
-                );
+        $this->rol["rolescod"] = $_POST["rolescod"];
+        $this->rol["rolesdsc"] = $_POST["rolesdsc"];
+        $this->rol["rolesest"] = $_POST["rolesest"];
+
+        $this->xssToken = $_POST["xssToken"];
+    }
+
+    private function validarDatos()
+    {
+        if (!$this->validarAntiXSSToken()) {
+            Site::redirectToWithMsg("index.php?page=Roles-RolesList", "Error al procesar la solicitud");
+        }
+
+        if (Validators::IsEmpty($this->rol["rolescod"])) {
+            $this->addError("El código del rol no puede ir vacío", "rolescod");
+        }
+
+        if (Validators::IsEmpty($this->rol["rolesdsc"])) {
+            $this->addError("La descripción del rol no puede ir vacía", "rolesdsc");
+        }
+
+        return count($this->errors) === 0;
+    }
+
+    private function procesarAccion()
+    {
+        switch ($this->mode) {
+            case 'INS':
+                $result = Roles::agregarRoles($this->rol);
+                if ($result === "exists") {
+                    $this->addError("El código ya existe.", "rolescod");
+                } elseif ($result) {
+                    Site::redirectToWithMsg("index.php?page=Roles-RolesList", "Rol registrado satisfactoriamente");
+                }
                 break;
-            case "UPD":
-                Roles::actualizar(
-                    $this->viewData["rolescod"],
-                    $this->viewData["rolesdsc"],
-                    $this->viewData["rolesest"]
-                );
+
+            case 'UPD':
+                $result = Roles::actualizarRoles($this->rol);
+                if ($result) {
+                    Site::redirectToWithMsg("index.php?page=Roles-RolesList", "Rol actualizado satisfactoriamente");
+                }
                 break;
-            case "DEL":
-                Roles::eliminar($this->viewData["rolescod"]);
+
+            case 'DEL':
+                $result = Roles::eliminarRoles($this->rol['rolescod']);
+                if ($result) {
+                    Site::redirectToWithMsg("index.php?page=Roles-RolesList", "Rol eliminado satisfactoriamente");
+                }
                 break;
         }
+    }
+
+    private function generateAntiXSSToken()
+    {
+        $_SESSION["Roles_Form_XSST"] = hash("sha256", time() . "ROL_FORM");
+        $this->xssToken = $_SESSION["Roles_Form_XSST"];
+    }
+
+    private function validarAntiXSSToken()
+    {
+        if (isset($_SESSION["Roles_Form_XSST"])) {
+            return $this->xssToken === $_SESSION["Roles_Form_XSST"];
+        }
+        return false;
+    }
+
+    private function generarViewData()
+    {
+        $this->viewData["mode"] = $this->mode;
+        $this->viewData["modes_dsc"] = sprintf(
+            $this->modeDscArr[$this->mode],
+            $this->rol["rolesdsc"],
+            $this->rol["rolescod"]
+        );
+        $this->viewData["rol"] = $this->rol;
+
+        $this->viewData["readonly_rolescod"] = (
+            $this->viewData["mode"]) ? 'readonly' : '';
+        
+            $this->viewData["readonly"] = (
+            $this->viewData["mode"] === 'DEL' ||
+            $this->viewData["mode"] === 'DSP') ? 'readonly' : '';
+
+        foreach ($this->errors as $context => $errores) {
+            $this->viewData[$context . '_error'] = $errores;
+            $this->viewData[$context . '_haserror'] = count($errores) > 0;
+        }
+
+        $this->viewData["showConfirm"] = ($this->viewData["mode"] !== 'DSP');
+        $this->generateAntiXSSToken();
+        $this->viewData["xssToken"] = $this->xssToken;
     }
 }
-?>

@@ -6,47 +6,56 @@ use Dao\Table;
 
 class Funciones extends Table
 {
-    public static function obtenerTodos()
+    public static function obtenerFunciones()
     {
-        $sqlstr = 'SELECT * FROM funciones;';
-        return self::obtenerRegistros($sqlstr, []);
+        $sqlstr = 'SELECT * FROM funciones';
+        $funciones = self::obtenerRegistros($sqlstr, []);
+        return $funciones;
     }
 
-    public static function obtenerPorId($fncod)
+    public static function obtenerFuncionPorID($id)
     {
         $sqlstr = 'SELECT * FROM funciones WHERE fncod = :fncod;';
-        return self::obtenerUnRegistro($sqlstr, ["fncod" => $fncod]);
+        $funcion = self::obtenerUnRegistro($sqlstr, ["fncod" => $id]);
+        return $funcion;
     }
-
-    public static function insertar($fncod, $fndsc, $fnest, $fntyp)
+    
+    public static function agregarFuncion($funcion)
     {
-        $sqlstr = 'INSERT INTO funciones (fncod, fndsc, fnest, fntyp) 
-                   VALUES (:fncod, :fndsc, :fnest, :fntyp);';
-        return self::executeNonQuery($sqlstr, [
-            "fncod" => $fncod,
-            "fndsc" => $fndsc,
-            "fnest" => $fnest,
-            "fntyp" => $fntyp
-        ]);
+        $existingFunction = self::obtenerFuncionPorID($funcion['fncod']);
+        if ($existingFunction) {
+            return "exists";
+        }
+
+        $sqlstr = 'INSERT INTO funciones (
+            fncod,
+            fndsc,
+            fnest,
+            fntyp
+        ) VALUES (
+            :fncod,
+            :fndsc,
+            :fnest,
+            :fntyp
+        );';
+
+        return self::executeNonQuery($sqlstr, $funcion);
     }
 
-    public static function actualizar($fncod, $fndsc, $fnest, $fntyp)
+    public static function actualizarFuncion($funcion)
     {
-        $sqlstr = 'UPDATE funciones 
-                   SET fndsc = :fndsc, fnest = :fnest, fntyp = :fntyp 
-                   WHERE fncod = :fncod;';
-        return self::executeNonQuery($sqlstr, [
-            "fncod" => $fncod,
-            "fndsc" => $fndsc,
-            "fnest" => $fnest,
-            "fntyp" => $fntyp
-        ]);
+        $sqlstr = 'UPDATE funciones SET
+            fndsc = :fndsc,
+            fnest = :fnest,
+            fntyp = :fntyp
+        WHERE fncod = :fncod;';
+
+        return self::executeNonQuery($sqlstr, $funcion);
     }
 
-    public static function eliminar($fncod)
+    public static function eliminarFuncion($fncod)
     {
         $sqlstr = 'DELETE FROM funciones WHERE fncod = :fncod;';
         return self::executeNonQuery($sqlstr, ["fncod" => $fncod]);
     }
 }
-?>

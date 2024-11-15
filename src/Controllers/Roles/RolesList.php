@@ -10,8 +10,17 @@ class RolesList extends PublicController
 {
     public function run(): void
     {
-        $roles = Roles::obtenerTodos();
-        Renderer::render("roles_list", array("roles" => $roles));
+        $rolesDao = Roles::ObtenerRoles();
+        $viewRoles = [];
+
+        foreach ($rolesDao as $rol) {
+            $viewRoles[] = $rol;
+        }
+
+        $viewData = [
+            "rol" => $viewRoles
+        ];
+
+        Renderer::render('roles/roles_list', $viewData);
     }
 }
-?>

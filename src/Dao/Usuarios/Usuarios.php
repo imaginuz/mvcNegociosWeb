@@ -6,62 +6,78 @@ use Dao\Table;
 
 class Usuarios extends Table
 {
-    public static function obtenerTodos()
+    public static function ObtenerUsuarios()
     {
-        $sqlstr = 'SELECT * FROM usuario;';
-        return self::obtenerRegistros($sqlstr, []);
+        $sqlstr = 'SELECT * FROM usuario';
+        $usuarios = self::obtenerRegistros($sqlstr, []);
+        return $usuarios;
     }
 
-    public static function obtenerPorId($usercod)
+    public static function ObtenerUsuariosPorID($id)
     {
-        $sqlstr = 'SELECT * FROM usuario WHERE usercod = :usercod;';
-        return self::obtenerUnRegistro($sqlstr, ["usercod" => $usercod]);
+        $sqlstr = 'SELECT * FROM usuario WHERE usercod=:usercod;';
+        $usuario = self::obtenerUnRegistro($sqlstr, ["usercod" => $id]);
+        return $usuario;
     }
 
-    public static function insertar($useremail, $username, $userpswd, $userfching, $userpswdest, $userpswdexp, $userest, $useractcod, $userpswdchg, $usertipo)
+    public static function agregarUsuario($usuario)
     {
-        $sqlstr = 'INSERT INTO usuario (useremail, username, userpswd, userfching, userpswdest, userpswdexp, userest, useractcod, userpswdchg, usertipo) 
-                   VALUES (:useremail, :username, :userpswd, :userfching, :userpswdest, :userpswdexp, :userest, :useractcod, :userpswdchg, :usertipo);';
-        return self::executeNonQuery($sqlstr, [
-            "useremail" => $useremail,
-            "username" => $username,
-            "userpswd" => $userpswd,
-            "userfching" => $userfching,
-            "userpswdest" => $userpswdest,
-            "userpswdexp" => $userpswdexp,
-            "userest" => $userest,
-            "useractcod" => $useractcod,
-            "userpswdchg" => $userpswdchg,
-            "usertipo" => $usertipo
-        ]);
+      //echo count($usuario);
+      unset($usuario['usercod']);
+      //echo '<br/>'.count($usuario);
+      //die();
+
+        $sqlstr =
+        'INSERT INTO usuario ( 
+        useremail, 
+        username, 
+        userpswd, 
+        userfching, 
+        userpswdest, 
+        userpswdexp, 
+        userest, 
+        useractcod, 
+        userpswdchg, 
+        usertipo
+      )
+    VALUES
+      (
+
+        :useremail, 
+        :username, 
+        :userpswd, 
+        :userfching, 
+        :userpswdest, 
+        :userpswdexp, 
+        :userest, 
+        :useractcod, 
+        :userpswdchg, 
+        :usertipo
+      );';
+      return self::executeNonQuery($sqlstr, $usuario);
     }
 
-    public static function actualizar($usercod, $useremail, $username, $userpswd, $userfching, $userpswdest, $userpswdexp, $userest, $useractcod, $userpswdchg, $usertipo)
+    public static function actualizarUsuario($usuario)
     {
-        $sqlstr = 'UPDATE usuario 
-                   SET useremail = :useremail, username = :username, userpswd = :userpswd, userfching = :userfching, 
-                       userpswdest = :userpswdest, userpswdexp = :userpswdexp, userest = :userest, useractcod = :useractcod, 
-                       userpswdchg = :userpswdchg, usertipo = :usertipo 
-                   WHERE usercod = :usercod;';
-        return self::executeNonQuery($sqlstr, [
-            "usercod" => $usercod,
-            "useremail" => $useremail,
-            "username" => $username,
-            "userpswd" => $userpswd,
-            "userfching" => $userfching,
-            "userpswdest" => $userpswdest,
-            "userpswdexp" => $userpswdexp,
-            "userest" => $userest,
-            "useractcod" => $useractcod,
-            "userpswdchg" => $userpswdchg,
-            "usertipo" => $usertipo
-        ]);
+      $sqlstr = "UPDATE usuario SET
+      useremail = :useremail,  
+      username = :username,  
+      userpswd = :userpswd, 
+      userfching = :userfching, 
+      userpswdest = :userpswdest, 
+      userpswdexp = :userpswdexp, 
+      userest = :userest, 
+      useractcod = :useractcod, 
+      userpswdchg = :userpswdchg, 
+      usertipo = :usertipo
+      WHERE usercod = :usercod;";
+
+      return self::executeNonQuery($sqlstr, $usuario);
     }
 
-    public static function eliminar($usercod)
+    public static function eliminarUsuario($usercod)
     {
-        $sqlstr = 'DELETE FROM usuario WHERE usercod = :usercod;';
-        return self::executeNonQuery($sqlstr, ["usercod" => $usercod]);
+      $sqlstr = "DELETE FROM usuario WHERE usercod =:usercod;";
+      return self::executeNonQuery($sqlstr, ["usercod"=>$usercod]);
     }
 }
-?>

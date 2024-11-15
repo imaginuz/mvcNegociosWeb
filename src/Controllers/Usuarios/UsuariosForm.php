@@ -3,114 +3,216 @@
 namespace Controllers\Usuarios;
 
 use Controllers\PublicController;
-use Dao\Usuarios\Usuarios;
 use Views\Renderer;
+use Utilities\Site;
+use Dao\Usuarios\Usuarios;
+use Utilities\Validators;
 
 class UsuariosForm extends PublicController
 {
     private $viewData = [];
-    private $modeDscArr = [
-        "INS" => "Crear Nuevo Usuario",
-        "UPD" => "Editar Usuario %s",
-        "DEL" => "Eliminar Usuario %s",
+    private $modeDscArr =
+    [
+        "INS" => "Crear nuevo usuario",
+        "UPD" => "Editando a %s (%s)",
+        "DSP" => "Detalle de %s (%s)",
+        "DEL" => "Eliminando a %s (%s)",
+    ];
+
+    private $mode = '';
+
+    private $errors = [];
+
+    private $xssToken = '';
+
+    private function addError($error, $context='global')
+    {
+        if(isset($this->errors[$context]))
+        {
+            $this->errors[$context] [] = $error;
+        }
+
+        else
+        {
+            $this->errors[$context] = [$error];
+        }
+    }
+
+    private $usuario =
+    [
+        "usercod" => 0,
+        "useremail" => '',
+        "username" => '',
+        "userpswd" => '',
+        "userfching" => '',
+        "userpswdest" => 'ACT',
+        "userpswdexp" => '',
+        "userest" => 'ACT',
+        "useractcod" => '',
+        "userpswdchg" => '',
+        "usertipo" => 'ADM',
     ];
 
     public function run(): void
     {
-        $this->init();
-        if (!$this->isPostBack()) {
-            $this->prepareView();
-            Renderer::render("usuarios_form", $this->viewData);
-            return;
+        $this->inicializarForm();
+
+        if ($this->isPostBack()) {
+            $this->cargarDatosDelFormulario();
+            
+            if($this->validarDatos())
+            {
+                $this->procesarAccion();
+            }
         }
 
-        $this->processPost();
-        if (empty($this->viewData["errors"])) {
-            $this->executeAction();
+        $this->generarViewData();
+        Renderer::render('usuarios/usuarios_form', $this->viewData);
+    }
+
+    private function inicializarForm()
+    {
+        if (isset($_GET["mode"]) && isset($this->modeDscArr)) {
+            $this->mode = $_GET["mode"];
+        } else {
+            Site::redirectToWithMsg("index.php?page=Usuarios-UsuariosList", "Algo sucedió mal. Intente de nuevo.");
+            die();
         }
-        $this->prepareView();
-        Renderer::render("usuarios_form", $this->viewData);
-    }
 
-    private function init()
-    {
-        $this->viewData["mode"] = $_GET["mode"] ?? "INS";
-        $this->viewData["usercod"] = $_GET["usercod"] ?? null;
-        $this->viewData["useremail"] = "";
-        $this->viewData["username"] = "";
-        $this->viewData["userpswd"] = "";
-        $this->viewData["userfching"] = date("Y-m-d H:i:s");
-        $this->viewData["userest"] = "";
-        $this->viewData["usertipo"] = "";
-        $this->viewData["errors"] = [];
-    }
-
-    private function prepareView()
-    {
-        $mode = $this->viewData["mode"];
-        $this->viewData["mode_dsc"] = sprintf($this->modeDscArr[$mode], $this->viewData["username"]);
-        if ($mode === "UPD" || $mode === "DEL") {
-            $usuario = Usuarios::obtenerPorId($this->viewData["usercod"]);
-            $this->viewData = array_merge($this->viewData, $usuario);
+        if ($this->mode !== 'INS' && isset($_GET["usercod"])) {
+            $this->usuario["usercod"] = $_GET["usercod"];
+            $this->cargarDatosUsuarios();
         }
     }
 
-    private function processPost()
+    private function cargarDatosUsuarios()
     {
-        if ($this->viewData["mode"] === "DEL") {
-            return;
-        }
-
-        $this->viewData["useremail"] = $_POST["useremail"] ?? "";
-        $this->viewData["username"] = $_POST["username"] ?? "";
-        $this->viewData["userpswd"] = $_POST["userpswd"] ?? "";
-        $this->viewData["userest"] = $_POST["userest"] ?? "";
-        $this->viewData["usertipo"] = $_POST["usertipo"] ?? "";
-
-        if (empty($this->viewData["useremail"])) {
-            $this->viewData["errors"][] = "El correo electrónico es obligatorio.";
-        }
-        if (empty($this->viewData["username"])) {
-            $this->viewData["errors"][] = "El nombre de usuario es obligatorio.";
-        }
+        $tmpUsuario = Usuarios::ObtenerUsuariosPorID($this->usuario["usercod"]);
+        $this->usuario = $tmpUsuario;
     }
 
-    private function executeAction()
+    private function cargarDatosDelFormulario()
     {
-        switch ($this->viewData["mode"]) {
-            case "INS":
-                Usuarios::insertar(
-                    $this->viewData["useremail"],
-                    $this->viewData["username"],
-                    password_hash($this->viewData["userpswd"], PASSWORD_DEFAULT),
-                    $this->viewData["userfching"],
-                    $this->viewData["userest"],
-                    date("Y-m-d H:i:s", strtotime("+3 months")),
-                    $this->viewData["userest"],
-                    null, 
-                    null,
-                    $this->viewData["usertipo"]
-                );
+        $this->usuario["usercod"] = $_POST["usercod"];
+        $this->usuario["useremail"] = $_POST["useremail"];
+        $this->usuario["username"] = $_POST["username"];
+        $this->usuario["userpswd"] = $_POST["userpswd"];
+        $this->usuario["userfching"] = $_POST["userfching"];
+        $this->usuario["userpswdest"] = $_POST["userpswdest"];
+        $this->usuario["userpswdexp"] = $_POST["userpswdexp"];
+        $this->usuario["userest"] = $_POST["userest"];
+        $this->usuario["useractcod"] = $_POST["useractcod"];
+        $this->usuario["userpswdchg"] = $_POST["userpswdchg"];
+        $this->usuario["usertipo"] = $_POST["usertipo"];
+
+        $this->xssToken = $_POST["xssToken"];
+    }
+
+    private function validarDatos()
+    {
+        if(!$this->validarAntiXSSToken())
+        {
+            \Utilities\Site::redirectToWithMsg("index.php?page=Usuarios-UsuariosList", "Error al procesar la solicitud");
+        }
+
+        if(Validators::IsEmpty($this->usuario["username"]))
+        {
+            $this->addError("El usuario no puede ir vacío", "username");
+        }
+
+        if(Validators::IsEmpty($this->usuario["useremail"]))
+        {
+            $this->addError("El correo no puede ir vacío", "useremail");
+        }
+
+        if(Validators::IsEmpty($this->usuario["userpswd"]))
+        {
+            $this->addError("La contraseña no puede ir vacía", "userpswd");
+        }
+
+        if($this->usuario["useractcod"] > 999)
+        {
+            $this->addError("No se encuentra dentro del rango");
+        }
+
+        return count ($this->errors) === 0;
+    }
+
+    private function procesarAccion()
+    {
+        switch($this->mode)
+        {
+            case 'INS':
+                $result = Usuarios::agregarUsuario($this->usuario);
+                if($result)
+                {
+                    Site::redirectToWithMsg("index.php?page=Usuarios-UsuariosList", "Usuario registrado satifactoriamente");
+                }
                 break;
-            case "UPD":
-                Usuarios::actualizar(
-                    $this->viewData["usercod"],
-                    $this->viewData["useremail"],
-                    $this->viewData["username"],
-                    password_hash($this->viewData["userpswd"], PASSWORD_DEFAULT),
-                    $this->viewData["userfching"],
-                    $this->viewData["userest"],
-                    date("Y-m-d H:i:s", strtotime("+3 months")),
-                    $this->viewData["userest"],
-                    null,
-                    null,
-                    $this->viewData["usertipo"]
-                );
+
+            case 'UPD':
+                $result = Usuarios::actualizarUsuario($this->usuario);
+                if($result)
+                {
+                    Site::redirectToWithMsg("index.php?page=Usuarios-UsuariosList", "Usuario actualizado satifactoriamente");
+                }
                 break;
-            case "DEL":
-                Usuarios::eliminar($this->viewData["usercod"]);
+
+            case 'DEL':
+                $result = Usuarios::eliminarUsuario($this->usuario['usercod']);
+                if($result)
+                {
+                    Site::redirectToWithMsg("index.php?page=Usuarios-UsuariosList", "Usuario eliminado satifactoriamente");
+                }
                 break;
         }
+    }
+
+    private function generateAntiXSSToken()
+    {
+        $_SESSION["Usuarios_Form_XSST"] = hash("sha256", time()."USUARIO_FORM");
+        $this->xssToken = $_SESSION["Usuarios_Form_XSST"];
+    }
+
+    private function validarAntiXSSToken()
+    {
+        if(isset($_SESSION["Usuarios_Form_XSST"]))
+        {
+            if($this->xssToken === $_SESSION["Usuarios_Form_XSST"])
+            {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    private function generarViewData()
+    {
+        $this->viewData["mode"] = $this->mode;
+
+        $this->viewData["modes_dsc"] = sprintf(
+            $this->modeDscArr[$this->mode],
+            $this->usuario["username"],
+            $this->usuario["usercod"]
+        );
+
+        $this->viewData["usuario"] = $this->usuario;
+
+        $this->viewData["readonly"] =
+            ($this->viewData["mode"] === 'DEL' ||
+             $this->viewData["mode"] === 'DSP') ? 'readonly': '';
+
+        foreach($this->errors as $context=>$errores)
+        {
+            $this->viewData[$context.'_error'] = $errores;
+            $this->viewData[$context.'_haserror'] = count($errores) > 0;
+        }
+
+        $this->viewData["showConfirm"] = ($this->viewData["mode"] !== 'DSP');
+
+        $this->generateAntiXSSToken();
+
+        $this->viewData["xssToken"] = $this->xssToken;
     }
 }
-?>

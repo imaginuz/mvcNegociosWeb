@@ -3,97 +3,167 @@
 namespace Controllers\Funciones;
 
 use Controllers\PublicController;
-use Dao\Funciones\Funciones;
 use Views\Renderer;
+use Utilities\Site;
+use Dao\Funciones\Funciones;
+use Utilities\Validators;
 
 class FuncionesForm extends PublicController
 {
     private $viewData = [];
     private $modeDscArr = [
-        "INS" => "Crear Nueva Función",
-        "UPD" => "Editar Función %s",
-        "DEL" => "Eliminar Función %s",
+        "INS" => "Crear nueva función",
+        "UPD" => "Editando la función %s (%s)",
+        "DSP" => "Detalle de la función %s (%s)",
+        "DEL" => "Eliminando la función %s (%s)",
+    ];
+
+    private $mode = '';
+    private $errors = [];
+    private $xssToken = '';
+
+    private function addError($error, $context = 'global')
+    {
+        if (isset($this->errors[$context])) {
+            $this->errors[$context][] = $error;
+        } else {
+            $this->errors[$context] = [$error];
+        }
+    }
+
+    private $funcion = [
+        "fncod" => 'FUNC001',
+        "fndsc" => '',
+        "fnest" => 'ACT',
+        "fntyp" => '',
     ];
 
     public function run(): void
     {
-        $this->init();
-        if (!$this->isPostBack()) {
-            $this->prepareView();
-            Renderer::render("funciones_form", $this->viewData);
-            return;
+        $this->inicializarForm();
+
+        if ($this->isPostBack()) {
+            $this->cargarDatosDelFormulario();
+
+            if ($this->validarDatos()) {
+                $this->procesarAccion();
+            }
         }
 
-        $this->processPost();
-        if (empty($this->viewData["errors"])) {
-            $this->executeAction();
+        $this->generarViewData();
+        Renderer::render('funciones/funciones_form', $this->viewData);
+    }
+
+    private function inicializarForm()
+    {
+        if (isset($_GET["mode"]) && isset($this->modeDscArr)) {
+            $this->mode = $_GET["mode"];
+        } else {
+            Site::redirectToWithMsg("index.php?page=Funciones-FuncionesList", "Algo sucedió mal. Intente de nuevo.");
+            die();
         }
-        $this->prepareView();
-        Renderer::render("funciones_form", $this->viewData);
-    }
 
-    private function init()
-    {
-        $this->viewData["mode"] = $_GET["mode"] ?? "INS";
-        $this->viewData["fncod"] = $_GET["fncod"] ?? null;
-        $this->viewData["fndsc"] = "";
-        $this->viewData["fnest"] = "";
-        $this->viewData["fntyp"] = "";
-        $this->viewData["errors"] = [];
-    }
-
-    private function prepareView()
-    {
-        $mode = $this->viewData["mode"];
-        $this->viewData["mode_dsc"] = sprintf($this->modeDscArr[$mode], $this->viewData["fncod"]);
-        if ($mode === "UPD" || $mode === "DEL") {
-            $funcion = Funciones::obtenerPorId($this->viewData["fncod"]);
-            $this->viewData = array_merge($this->viewData, $funcion);
+        if ($this->mode !== 'INS' && isset($_GET["fncod"])) {
+            $this->funcion["fncod"] = $_GET["fncod"];
+            $this->cargarDatosFuncion();
         }
     }
 
-    private function processPost()
+    private function cargarDatosFuncion()
     {
-        if ($this->viewData["mode"] === "DEL") {
-            return;
-        }
-
-        $this->viewData["fncod"] = $_POST["fncod"] ?? "";
-        $this->viewData["fndsc"] = $_POST["fndsc"] ?? "";
-        $this->viewData["fnest"] = $_POST["fnest"] ?? "";
-        $this->viewData["fntyp"] = $_POST["fntyp"] ?? "";
-
-        if (empty($this->viewData["fncod"])) {
-            $this->viewData["errors"][] = "El código de la función es obligatorio.";
-        }
-        if (empty($this->viewData["fndsc"])) {
-            $this->viewData["errors"][] = "La descripción de la función es obligatoria.";
-        }
+        $tmpFuncion = Funciones::obtenerFuncionPorID($this->funcion["fncod"]);
+        $this->funcion = $tmpFuncion;
     }
 
-    private function executeAction()
+    private function cargarDatosDelFormulario()
     {
-        switch ($this->viewData["mode"]) {
-            case "INS":
-                Funciones::insertar(
-                    $this->viewData["fncod"],
-                    $this->viewData["fndsc"],
-                    $this->viewData["fnest"],
-                    $this->viewData["fntyp"]
-                );
+        $this->funcion["fncod"] = $_POST["fncod"];
+        $this->funcion["fndsc"] = $_POST["fndsc"];
+        $this->funcion["fnest"] = $_POST["fnest"];
+        $this->funcion["fntyp"] = $_POST["fntyp"];
+
+        $this->xssToken = $_POST["xssToken"];
+    }
+
+    private function validarDatos()
+    {
+        if (!$this->validarAntiXSSToken()) {
+            Site::redirectToWithMsg("index.php?page=Funciones-FuncionesList", "Error al procesar la solicitud");
+        }
+
+        if (Validators::IsEmpty($this->funcion["fncod"])) {
+            $this->addError("El código de la función no puede ir vacío", "fncod");
+        }
+
+        if (Validators::IsEmpty($this->funcion["fndsc"])) {
+            $this->addError("La descripción de la función no puede ir vacía", "fndsc");
+        }
+
+        return count($this->errors) === 0;
+    }
+
+    private function procesarAccion()
+    {
+        switch ($this->mode) {
+            case 'INS':
+                $result = Funciones::agregarFuncion($this->funcion);
+                if ($result === "exists") {
+                    $this->addError("El código ya existe.", "fncod");
+                } elseif ($result) {
+                    Site::redirectToWithMsg("index.php?page=Funciones-FuncionesList", "Función registrada satisfactoriamente");
+                }
                 break;
-            case "UPD":
-                Funciones::actualizar(
-                    $this->viewData["fncod"],
-                    $this->viewData["fndsc"],
-                    $this->viewData["fnest"],
-                    $this->viewData["fntyp"]
-                );
+
+            case 'UPD':
+                $result = Funciones::actualizarFuncion($this->funcion);
+                if ($result) {
+                    Site::redirectToWithMsg("index.php?page=Funciones-FuncionesList", "Función actualizada satisfactoriamente");
+                }
                 break;
-            case "DEL":
-                Funciones::eliminar($this->viewData["fncod"]);
+
+            case 'DEL':
+                $result = Funciones::eliminarFuncion($this->funcion['fncod']);
+                if ($result) {
+                    Site::redirectToWithMsg("index.php?page=Funciones-FuncionesList", "Función eliminada satisfactoriamente");
+                }
                 break;
         }
+    }
+
+    private function generateAntiXSSToken()
+    {
+        $_SESSION["Funciones_Form_XSST"] = hash("sha256", time() . "FUNC_FORM");
+        $this->xssToken = $_SESSION["Funciones_Form_XSST"];
+    }
+
+    private function validarAntiXSSToken()
+    {
+        if (isset($_SESSION["Funciones_Form_XSST"])) {
+            return $this->xssToken === $_SESSION["Funciones_Form_XSST"];
+        }
+        return false;
+    }
+
+    private function generarViewData()
+    {
+        $this->viewData["mode"] = $this->mode;
+        $this->viewData["modes_dsc"] = sprintf(
+            $this->modeDscArr[$this->mode],
+            $this->funcion["fndsc"],
+            $this->funcion["fncod"]
+        );
+        $this->viewData["funcion"] = $this->funcion;
+
+        $this->viewData["readonly_fncod"] = ($this->mode !== 'INS') ? 'readonly' : '';
+        $this->viewData["readonly"] = ($this->mode === 'DEL' || $this->mode === 'DSP') ? 'readonly' : '';
+
+        foreach ($this->errors as $context => $errores) {
+            $this->viewData[$context . '_error'] = $errores;
+            $this->viewData[$context . '_haserror'] = count($errores) > 0;
+        }
+
+        $this->viewData["showConfirm"] = ($this->mode !== 'DSP');
+        $this->generateAntiXSSToken();
+        $this->viewData["xssToken"] = $this->xssToken;
     }
 }
-?>

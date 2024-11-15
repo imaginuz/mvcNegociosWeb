@@ -10,8 +10,17 @@ class FuncionesList extends PublicController
 {
     public function run(): void
     {
-        $funciones = Funciones::obtenerTodos();
-        Renderer::render("funciones_list", array("funciones" => $funciones));
+        $funcionesDao = Funciones::obtenerFunciones();
+        $viewFunciones = [];
+
+        foreach ($funcionesDao as $funcion) {
+            $viewFunciones[] = $funcion;
+        }
+
+        $viewData = [
+            "funcion" => $viewFunciones
+        ];
+
+        Renderer::render('funciones/funciones_list', $viewData);
     }
 }
-?>
